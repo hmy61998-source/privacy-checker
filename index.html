@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>隐私合规检查工具</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&family=DM+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #F5F3EE;
+  --surface: #FDFCFA;
+  --surface2: #F0EDE7;
+  --border: #DDD9D1;
+  --border-strong: #C4BFB5;
+  --ink: #1A1916;
+  --ink2: #5A564F;
+  --ink3: #9B968D;
+  --accent: #2A5C45;
+  --accent-light: #EAF2EE;
+  --accent2: #8B4513;
+  --warn: #7A4F00;
+  --warn-light: #FDF4E3;
+  --danger: #8B1A1A;
+  --danger-light: #FDF0F0;
+  --pass: #1A5C2A;
+  --pass-light: #EAF5ED;
+  --miss: #4A4642;
+  --miss-light: #F0EDE7;
+  --radius: 6px;
+  --radius-lg: 10px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Noto Sans SC', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* HEADER */
+.header {
+  background: var(--ink);
+  color: var(--surface);
+  padding: 0 40px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-title {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.header-title::before {
+  content: '';
+  display: block;
+  width: 8px; height: 8px;
+  background: #4CAF82;
+  border-radius: 50%;
+}
+.header-meta {
+  font-size: 11px;
+  color: #888;
+  font-family: 'DM Mono', monospace;
+}
+
+/* LAYOUT */
+.main {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+/* PANEL */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.panel-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+}
+.panel-icon {
+  width: 28px; height: 28px;
+  border-radius: var(--radius);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.panel-icon.blue { background: #DDE8F5; }
+.panel-icon.green { background: #D8EEE0; }
+
+.panel-icon svg { width: 14px; height: 14px; }
+.panel-label { font-size: 13px; font-weight: 500; color: var(--ink); }
+.panel-desc { font-size: 11px; color: var(--ink3); margin-top: 1px; }
+.panel-body { padding: 16px 18px; }
+
+/* TABS */
+.tab-row { display: flex; gap: 4px; margin-bottom: 12px; }
+.tab-btn {
+  font-size: 11px; font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--ink2);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: 'Noto Sans SC', sans-serif;
+}
+.tab-btn:hover { background: var(--surface2); }
+.tab-btn.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+/* INPUTS */
+input[type=text], textarea {
+  width: 100%;
+  font-size: 13px;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--ink);
+  outline: none;
+  font-family: 'Noto Sans SC', sans-serif;
+  transition: border-color 0.15s;
+}
+input[type=text]:focus, textarea:focus {
+  border-color: var(--accent);
+  background: var(--surface);
+}
+textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
+
+/* UPLOAD */
+.upload-zone {
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: var(--bg);
+}
+.upload-zone:hover { border-color: var(--accent); background: var(--accent-light); }
+.upload-zone.active { border-color: var(--accent); background: var(--accent-light); border-style: solid; }
+.upload-zone.has-file { border-color: var(--accent); background: var(--accent-light); border-style: solid; }
+.upload-icon { margin-bottom: 8px; }
+.upload-zone p { font-size: 13px; color: var(--ink2); }
+.upload-zone span { font-size: 11px; color: var(--ink3); }
+input[type=file] { display: none; }
+
+/* FIELDS */
+
+
+/* BUTTONS */
+.btn {
+  font-size: 13px; font-weight: 500;
+  padding: 9px 20px;
+  border-radius: var(--radius);
+  border: none; cursor: pointer;
+  transition: all 0.15s;
+  font-family: 'Noto Sans SC', sans-serif;
+}
+.btn-dark { background: var(--ink); color: #fff; }
+.btn-dark:hover { opacity: 0.85; }
+.btn-dark:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--ink2);
+}
+.btn-ghost:hover { background: var(--surface2); }
+
+.run-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 28px;
+}
+.run-status { font-size: 12px; color: var(--ink3); display: flex; align-items: center; gap: 8px; }
+
+/* SPINNER */
+.spinner {
+  display: inline-block; width: 13px; height: 13px;
+  border: 1.5px solid var(--border-strong);
+  border-top-color: var(--ink);
+  border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* PROGRESS */
+.progress-track {
+  height: 3px; background: var(--surface2);
+  border-radius: 2px; overflow: hidden;
+  margin-bottom: 24px;
+}
+.progress-fill {
+  height: 100%; background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+/* RESULTS */
+.result-section { margin-bottom: 24px; }
+.result-section-title {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; letter-spacing: 0.1em;
+  color: var(--ink3);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  padding-left: 2px;
+}
+
+.result-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+.result-card-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.1s;
+  border-bottom: 1px solid transparent;
+}
+.result-card-head:hover { background: var(--surface2); }
+.result-card-head.open { border-bottom-color: var(--border); }
+.rch-left { display: flex; align-items: center; gap: 8px; }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.dot-pass { background: #2E8B57; }
+.dot-warn { background: #D4860A; }
+.dot-fail { background: #C0392B; }
+.dot-miss { background: #AAA49C; }
+.rch-title { font-size: 13px; font-weight: 500; color: var(--ink); }
+.rch-badge {
+  font-size: 10px; font-weight: 500;
+  padding: 2px 8px; border-radius: 10px;
+  font-family: 'DM Mono', monospace;
+}
+.badge-pass { background: var(--pass-light); color: var(--pass); }
+.badge-warn { background: var(--warn-light); color: var(--warn); }
+.badge-fail { background: var(--danger-light); color: var(--danger); }
+.badge-miss { background: var(--miss-light); color: var(--miss); }
+.rch-arrow { font-size: 10px; color: var(--ink3); transition: transform 0.2s; }
+.rch-arrow.open { transform: rotate(180deg); }
+.result-card-body { padding: 14px 16px; display: none; }
+.result-card-body.open { display: block; }
+
+/* METRICS */
+.metrics-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.metric-box {
+  flex: 1; padding: 10px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+.metric-num { font-size: 22px; font-weight: 500; color: var(--ink); font-family: 'DM Mono', monospace; }
+.metric-label { font-size: 10px; color: var(--ink3); margin-top: 2px; letter-spacing: 0.03em; }
+.metric-box.m-pass .metric-num { color: var(--pass); }
+.metric-box.m-warn .metric-num { color: var(--warn); }
+.metric-box.m-fail .metric-num { color: var(--danger); }
+
+.rate-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.rate-bar { flex: 1; height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
+.rate-fill { height: 100%; border-radius: 2px; }
+.rate-text { font-size: 11px; color: var(--ink2); font-family: 'DM Mono', monospace; white-space: nowrap; }
+
+/* ITEM LIST */
+.item-list { display: flex; flex-direction: column; gap: 4px; }
+.item-row {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 8px 10px; border-radius: var(--radius);
+  font-size: 12px;
+}
+.item-row.pass { background: var(--pass-light); }
+.item-row.warn { background: var(--warn-light); }
+.item-row.fail { background: var(--danger-light); }
+.item-row.miss { background: var(--miss-light); }
+.item-sym { font-size: 12px; margin-top: 1px; flex-shrink: 0; font-family: 'DM Mono', monospace; font-weight: 500; }
+.item-sym.pass { color: var(--pass); }
+.item-sym.warn { color: var(--warn); }
+.item-sym.fail { color: var(--danger); }
+.item-sym.miss { color: var(--miss); }
+.item-main { font-weight: 500; color: var(--ink); }
+.item-sub { font-size: 11px; color: var(--ink2); margin-top: 3px; font-family: 'DM Mono', monospace; word-break: break-all; }
+.item-row.warn .item-sub { color: var(--warn); }
+.item-row.fail .item-sub { color: var(--danger); }
+.list-divider { height: 1px; background: var(--border); margin: 8px 0; }
+
+/* SUMMARY */
+.summary-panel {
+  background: var(--ink);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.summary-metric { text-align: center; }
+.summary-num { font-size: 28px; font-weight: 500; font-family: 'DM Mono', monospace; }
+.summary-num.ok { color: #4CAF82; }
+.summary-num.ng { color: #E07070; }
+.summary-label { font-size: 10px; color: #888; letter-spacing: 0.06em; margin-top: 2px; }
+.summary-verdict {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 18px; font-weight: 600;
+  display: flex; align-items: center; gap: 10px;
+}
+.verdict-ok { color: #4CAF82; }
+.verdict-ng { color: #E07070; }
+
+/* NOTICE */
+.notice {
+  font-size: 11px; color: var(--ink3);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  margin-top: 12px;
+  line-height: 1.7;
+}
+.notice strong { color: var(--ink2); }
+
+/* HIDDEN */
+.hidden { display: none !important; }
+
+/* RESPONSIVE */
+@media (max-width: 600px) {
+  .two-col { grid-template-columns: 1fr; }
+  .header { padding: 0 20px; }
+  .main { padding: 24px 16px 60px; }
+  .summary-panel { flex-direction: column; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-title">隐私合规检查工具</div>
+  <div class="header-meta">纯前端 · 零依赖后端 · 本地运行</div>
+</header>
+
+<main class="main">
+
+  <!-- 两列输入 -->
+  <div class="two-col">
+
+    <!-- 隐私声明 -->
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-icon blue">
+          <svg viewBox="0 0 14 14" fill="none" stroke="#185FA5" stroke-width="1.4">
+            <rect x="1.5" y="1" width="8" height="11" rx="1.2"/>
+            <line x1="3.5" y1="4" x2="7.5" y2="4"/>
+            <line x1="3.5" y1="6.2" x2="8.5" y2="6.2"/>
+            <line x1="3.5" y1="8.4" x2="6.5" y2="8.4"/>
+            <path d="M10 8.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5z" fill="#DDE8F5" stroke="#185FA5"/>
+            <path d="M9.2 11l.7.7 1.3-1.2" stroke="#185FA5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div>
+          <div class="panel-label">隐私声明</div>
+          <div class="panel-desc">检查敏感字段是否加粗</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="tab-row" id="p-tabs">
+          <button class="tab-btn active" onclick="switchTab('p','url',this)">HTML 链接</button>
+          <button class="tab-btn" onclick="switchTab('p','docx',this)">Word 文档</button>
+        </div>
+        <div id="p-url-panel">
+          <input type="text" id="p-url" placeholder="https://example.com/privacy"/>
+          <div class="notice">
+            <strong>跨域限制：</strong>部分网站禁止跨域访问，链接无法抓取时请改用 Word 文档上传。
+          </div>
+        </div>
+        <div id="p-docx-panel" class="hidden">
+          <div class="upload-zone" id="p-dz" onclick="document.getElementById('p-file').click()"
+               ondragover="dzDrag(event,'p',true)" ondragleave="dzDrag(event,'p',false)"
+               ondrop="dzDrop(event,'p')">
+            <div class="upload-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#AAA49C" stroke-width="1.4">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="12" y1="18" x2="12" y2="12"/>
+                <line x1="9" y1="15" x2="15" y2="15"/>
+              </svg>
+            </div>
+            <p id="p-fname">点击或拖拽上传 .docx 文件</p>
+            <span>仅支持 Word 2007+ (.docx)</span>
+          </div>
+          <input type="file" id="p-file" accept=".docx" onchange="loadFile('p',this)"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- 共享清单 -->
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-icon green">
+          <svg viewBox="0 0 14 14" fill="none" stroke="#0F6E56" stroke-width="1.4">
+            <rect x="1" y="2.5" width="12" height="9" rx="1.2"/>
+            <line x1="4" y1="5.5" x2="10" y2="5.5"/>
+            <line x1="4" y1="7.5" x2="8" y2="7.5"/>
+            <circle cx="11" cy="11" r="2.5" fill="#D8EEE0" stroke="#0F6E56"/>
+            <line x1="11" y1="9.8" x2="11" y2="12.2" stroke-linecap="round"/>
+            <line x1="9.8" y1="11" x2="12.2" y2="11" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div>
+          <div class="panel-label">个人信息共享清单</div>
+          <div class="panel-desc">验证清单内链接有效性</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="tab-row" id="s-tabs">
+          <button class="tab-btn active" onclick="switchTab('s','url',this)">HTML 链接</button>
+          <button class="tab-btn" onclick="switchTab('s','docx',this)">Word 文档</button>
+        </div>
+        <div id="s-url-panel">
+          <input type="text" id="s-url" placeholder="https://example.com/data-sharing"/>
+        </div>
+        <div id="s-docx-panel" class="hidden">
+          <div class="upload-zone" id="s-dz" onclick="document.getElementById('s-file').click()"
+               ondragover="dzDrag(event,'s',true)" ondragleave="dzDrag(event,'s',false)"
+               ondrop="dzDrop(event,'s')">
+            <div class="upload-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#AAA49C" stroke-width="1.4">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="12" y1="18" x2="12" y2="12"/>
+                <line x1="9" y1="15" x2="15" y2="15"/>
+              </svg>
+            </div>
+            <p id="s-fname">点击或拖拽上传 .docx 文件</p>
+            <span>仅支持 Word 2007+ (.docx)</span>
+          </div>
+          <input type="file" id="s-file" accept=".docx" onchange="loadFile('s',this)"/>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 执行栏 -->
+  <div class="run-bar">
+    <div class="run-status" id="run-status">就绪，请填写输入后开始检查</div>
+    <button class="btn btn-dark" id="run-btn" onclick="runCheck()">开始检查</button>
+  </div>
+
+  <!-- 进度条 -->
+  <div class="progress-track hidden" id="progress-track">
+    <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+  </div>
+
+  <!-- 结果区 -->
+  <div id="results-area" class="hidden"></div>
+
+</main>
+
+<!-- JSZip CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+<script>
+// ─── STATE ────────────────────────────────────────────────────────────────────
+const fields = [
+  "身份证号","护照号","银行卡号","信用卡号","手机号码","电话号码",
+  "家庭住址","电子邮箱","生物特征","指纹","人脸识别","虹膜",
+  "基因信息","健康状况","医疗记录","病历","宗教信仰","政治观点",
+  "种族","民族","性取向","未成年人信息","行踪轨迹","精确位置",
+  "密码","账号","财产信息","征信信息"
+];
+let tabMode = { p: 'url', s: 'url' };
+let fileData = { p: null, s: null };
+
+// ─── TAB SWITCH ───────────────────────────────────────────────────────────────
+function switchTab(sec, type, btn) {
+  tabMode[sec] = type;
+  document.querySelectorAll(`#${sec}-tabs .tab-btn`).forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(`${sec}-url-panel`).classList.toggle('hidden', type !== 'url');
+  document.getElementById(`${sec}-docx-panel`).classList.toggle('hidden', type !== 'docx');
+}
+
+// ─── FILE HANDLING ────────────────────────────────────────────────────────────
+function loadFile(sec, input) {
+  const f = input.files[0]; if (!f) return;
+  setFileLoaded(sec, f.name, f);
+}
+function setFileLoaded(sec, name, file) {
+  document.getElementById(`${sec}-fname`).textContent = name;
+  document.getElementById(`${sec}-dz`).classList.add('has-file');
+  const reader = new FileReader();
+  reader.onload = e => { fileData[sec] = e.target.result; };
+  reader.readAsArrayBuffer(file);
+}
+function dzDrag(e, sec, over) {
+  e.preventDefault();
+  document.getElementById(`${sec}-dz`).classList.toggle('active', over);
+}
+function dzDrop(e, sec) {
+  e.preventDefault();
+  const f = e.dataTransfer.files[0];
+  if (f && f.name.endsWith('.docx')) setFileLoaded(sec, f.name, f);
+  document.getElementById(`${sec}-dz`).classList.remove('active');
+}
+
+// ─── PROGRESS ─────────────────────────────────────────────────────────────────
+function setProgress(pct, msg, loading=true) {
+  document.getElementById('progress-track').classList.remove('hidden');
+  document.getElementById('progress-fill').style.width = pct + '%';
+  const st = document.getElementById('run-status');
+  st.innerHTML = loading ? `<span class="spinner"></span>&nbsp;${msg}` : msg;
+}
+function clearProgress() {
+  document.getElementById('progress-track').classList.add('hidden');
+  document.getElementById('progress-fill').style.width = '0%';
+}
+
+// ─── DOCX PARSER ─────────────────────────────────────────────────────────────
+async function parseDocx(arrayBuffer) {
+  const zip = await JSZip.loadAsync(arrayBuffer);
+  const xml = await zip.file('word/document.xml').async('string');
+
+  // Also get relationships for hyperlinks
+  let relsXml = '';
+  const relsFile = zip.file('word/_rels/document.xml.rels');
+  if (relsFile) relsXml = await relsFile.async('string');
+
+  return { xml, relsXml };
+}
+
+// Extract hyperlink targets from rels XML
+function extractRelsLinks(relsXml) {
+  const links = new Set();
+  const re = /Type="[^"]*hyperlink[^"]*"\s+Target="([^"]+)"/gi;
+  let m;
+  while ((m = re.exec(relsXml)) !== null) {
+    if (m[1].startsWith('http')) links.add(m[1]);
+  }
+  return [...links];
+}
+
+// Extract plain-text URLs from XML content
+function extractTextUrls(xmlStr) {
+  const links = new Set();
+  const re = /https?:\/\/[^\s<>"'\u3000\u3002\uff0c\uff01\u300b\u3011\uff09\u300d]+/gi;
+  let m;
+  while ((m = re.exec(xmlStr)) !== null) {
+    links.add(m[0].replace(/[.,;）】》\]]+$/, ''));
+  }
+  return [...links];
+}
+
+// Check if fields are bold in docx XML
+function checkBoldInDocx(xml, fieldsToCheck) {
+  // Parse runs: each <w:r> has optional <w:rPr><w:b/></w:rPr> and <w:t>text</w:t>
+  const results = {};
+  for (const f of fieldsToCheck) {
+    results[f] = { found: false, allBold: true, issues: [] };
+  }
+
+  // Extract all runs with bold info and text
+  // Strategy: reconstruct full paragraph text with per-char bold flags
+  const paraRe = /<w:p[ >]([\s\S]*?)<\/w:p>/g;
+  let pIdx = 0;
+  let pm;
+  while ((pm = paraRe.exec(xml)) !== null) {
+    pIdx++;
+    const paraXml = pm[1];
+    // Extract runs
+    const runRe = /<w:r[ >]([\s\S]*?)<\/w:r>/g;
+    let rm;
+    const charMap = []; // [{char, bold}]
+    while ((rm = runRe.exec(paraXml)) !== null) {
+      const runXml = rm[1];
+      // Bold: <w:b/> or <w:b w:val="1"> present in rPr, not <w:b w:val="0">
+      const rPrMatch = runXml.match(/<w:rPr>([\s\S]*?)<\/w:rPr>/);
+      let isBold = false;
+      if (rPrMatch) {
+        const rPr = rPrMatch[1];
+        // <w:b/> or <w:b> without val="0"
+        if (/<w:b(?!\w)(?![^>]*w:val="0")[^/]*\/?>/.test(rPr)) isBold = true;
+        // <w:b w:val="true"> / <w:b w:val="1">
+        if (/<w:b[^>]*w:val="(true|1)"/.test(rPr)) isBold = true;
+      }
+      // Extract text (handle xml:space="preserve")
+      const texts = [...runXml.matchAll(/<w:t[^>]*>([\s\S]*?)<\/w:t>/g)];
+      for (const t of texts) {
+        for (const ch of t[1]) charMap.push({ ch, bold: isBold });
+      }
+    }
+    const fullText = charMap.map(c => c.ch).join('');
+    for (const field of fieldsToCheck) {
+      if (!fullText.includes(field)) continue;
+      results[field].found = true;
+      // Check each occurrence
+      let start = 0;
+      while (true) {
+        const idx = fullText.indexOf(field, start);
+        if (idx === -1) break;
+        const notBold = charMap.slice(idx, idx + field.length).some(c => !c.bold);
+        if (notBold) {
+          results[field].allBold = false;
+          const snippet = fullText.slice(Math.max(0,idx-10), idx+field.length+20).trim();
+          results[field].issues.push(`段落 ${pIdx}：…${snippet}…`);
+        }
+        start = idx + 1;
+      }
+    }
+  }
+  return results;
+}
+
+// ─── HTML PARSER ─────────────────────────────────────────────────────────────
+const CORS_PROXY = 'https://api.allorigins.win/get?url=';
+
+async function fetchHtml(url) {
+  const res = await fetch(CORS_PROXY + encodeURIComponent(url), { signal: AbortSignal.timeout(15000) });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  return data.contents;
+}
+
+function checkBoldInHtml(html, fieldsToCheck) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  // Remove scripts/styles
+  doc.querySelectorAll('script,style,noscript,head').forEach(el => el.remove());
+
+  const BOLD_TAGS = new Set(['b','strong']);
+  const BOLD_WEIGHT_RE = /font-weight\s*:\s*(bold|[6-9]\d{2}|1000)/i;
+
+  function isBoldNode(node) {
+    let el = node.parentElement;
+    while (el) {
+      if (BOLD_TAGS.has(el.tagName.toLowerCase())) return true;
+      const style = el.getAttribute('style') || '';
+      if (BOLD_WEIGHT_RE.test(style)) return true;
+      const cls = el.className || '';
+      if (/\bbold\b/i.test(cls)) return true;
+      el = el.parentElement;
+    }
+    return false;
+  }
+
+  const results = {};
+  for (const f of fieldsToCheck) results[f] = { found: false, allBold: true, issues: [] };
+
+  const walker = document.createTreeWalker
+    ? doc.createTreeWalker(doc.body || doc.documentElement, NodeFilter.SHOW_TEXT)
+    : null;
+
+  if (!walker) return results;
+
+  let node;
+  while ((node = walker.nextNode())) {
+    const text = node.textContent || '';
+    for (const field of fieldsToCheck) {
+      if (!text.includes(field)) continue;
+      results[field].found = true;
+      if (!isBoldNode(node)) {
+        results[field].allBold = false;
+        const idx = text.indexOf(field);
+        const snippet = text.slice(Math.max(0,idx-10), idx+field.length+20).trim();
+        const parentTag = node.parentElement ? node.parentElement.tagName.toLowerCase() : '?';
+        results[field].issues.push(`<${parentTag}>：…${snippet}…`);
+      }
+    }
+  }
+  return results;
+}
+
+function extractLinksFromHtml(html, baseUrl) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  const links = new Set();
+  doc.querySelectorAll('a[href]').forEach(a => {
+    const href = a.getAttribute('href').trim();
+    if (href.startsWith('http')) {
+      links.add(href);
+    } else if (href.startsWith('/') && baseUrl) {
+      try {
+        const base = new URL(baseUrl);
+        links.add(base.origin + href);
+      } catch(e) {}
+    }
+  });
+  // Also bare URLs in text
+  const text = doc.body ? doc.body.innerText : '';
+  const urlRe = /https?:\/\/[^\s<>"'（）。，！？\u3000]+/gi;
+  let m;
+  while ((m = urlRe.exec(text)) !== null) {
+    links.add(m[0].replace(/[.,;）\]]+$/, ''));
+  }
+  return [...links];
+}
+
+// ─── LINK CHECKER ────────────────────────────────────────────────────────────
+async function checkLink(url) {
+  try {
+    const proxyUrl = CORS_PROXY + encodeURIComponent(url);
+    const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(12000) });
+    if (!res.ok) return { url, valid: false, code: res.status, error: `HTTP ${res.status}` };
+    const data = await res.json();
+    // allorigins returns status in body
+    const status = data.status && data.status.http_code;
+    if (status) {
+      return { url, valid: status < 400, code: status, error: status >= 400 ? `HTTP ${status}` : null };
+    }
+    // If we got contents, consider valid
+    return { url, valid: true, code: 200, error: null };
+  } catch(e) {
+    if (e.name === 'TimeoutError' || e.name === 'AbortError') {
+      return { url, valid: false, code: null, error: '连接超时' };
+    }
+    return { url, valid: false, code: null, error: '连接失败' };
+  }
+}
+
+async function checkLinksAll(links, onProgress) {
+  const results = [];
+  const BATCH = 4;
+  for (let i = 0; i < links.length; i += BATCH) {
+    const batch = links.slice(i, i + BATCH);
+    const batchResults = await Promise.all(batch.map(checkLink));
+    results.push(...batchResults);
+    if (onProgress) onProgress(results.length, links.length);
+  }
+  return results;
+}
+
+// ─── MAIN CHECK ──────────────────────────────────────────────────────────────
+async function runCheck() {
+  const btn = document.getElementById('run-btn');
+  const pUrl = document.getElementById('p-url').value.trim();
+  const sUrl = document.getElementById('s-url').value.trim();
+
+  const hasPrivacy = (tabMode.p === 'url' && pUrl) || (tabMode.p === 'docx' && fileData.p);
+  const hasSharing = (tabMode.s === 'url' && sUrl) || (tabMode.s === 'docx' && fileData.s);
+
+  if (!hasPrivacy && !hasSharing) {
+    document.getElementById('run-status').textContent = '⚠ 请先提供至少一项输入';
+    return;
+  }
+
+  btn.disabled = true;
+  document.getElementById('results-area').classList.add('hidden');
+  document.getElementById('results-area').innerHTML = '';
+
+  let boldResults = null;
+  let linkResults = null;
+  let privacySource = '';
+  let sharingSource = '';
+
+  try {
+    // ── BOLD CHECK ──────────────────────────────────────────────────────────
+    if (hasPrivacy) {
+      setProgress(5, '正在加载隐私声明…');
+      if (tabMode.p === 'docx') {
+        privacySource = document.getElementById('p-fname').textContent;
+        setProgress(20, '解析 Word 文档结构…');
+        const { xml } = await parseDocx(fileData.p);
+        setProgress(40, '检查敏感字段加粗标注…');
+        boldResults = checkBoldInDocx(xml, fields);
+      } else {
+        privacySource = pUrl;
+        setProgress(20, '抓取隐私声明页面…');
+        let html;
+        try {
+          html = await fetchHtml(pUrl);
+        } catch(e) {
+          boldResults = { _error: `无法抓取页面：${e.message}` };
+          html = null;
+        }
+        if (html) {
+          setProgress(40, '检查敏感字段加粗标注…');
+          boldResults = checkBoldInHtml(html, fields);
+        }
+      }
+    }
+
+    // ── LINK CHECK ──────────────────────────────────────────────────────────
+    if (hasSharing) {
+      setProgress(50, '正在加载共享清单…');
+      let links = [];
+      if (tabMode.s === 'docx') {
+        sharingSource = document.getElementById('s-fname').textContent;
+        setProgress(60, '提取文档中的链接…');
+        const { xml, relsXml } = await parseDocx(fileData.s);
+        const relsLinks = extractRelsLinks(relsXml);
+        const textLinks = extractTextUrls(xml);
+        links = [...new Set([...relsLinks, ...textLinks])];
+      } else {
+        sharingSource = sUrl;
+        setProgress(60, '抓取共享清单页面…');
+        let html;
+        try {
+          html = await fetchHtml(sUrl);
+        } catch(e) {
+          linkResults = { _error: `无法抓取页面：${e.message}` };
+          html = null;
+        }
+        if (html) {
+          links = extractLinksFromHtml(html, sUrl);
+        }
+      }
+      if (links.length > 0 && !linkResults?._error) {
+        setProgress(70, `验证 ${links.length} 条链接的有效性…`);
+        const linkCheckResults = await checkLinksAll(links, (done, total) => {
+          setProgress(70 + Math.round(done/total*25), `验证链接 ${done}/${total}…`);
+        });
+        linkResults = { links: linkCheckResults, source: sharingSource };
+      } else if (!linkResults?._error) {
+        linkResults = { links: [], source: sharingSource };
+      }
+    }
+
+    setProgress(100, '检查完成', false);
+    setTimeout(() => {
+      clearProgress();
+      document.getElementById('run-status').textContent = `检查完成 · ${new Date().toLocaleString('zh-CN',{hour12:false})}`;
+    }, 500);
+
+    renderResults(boldResults, privacySource, linkResults, sharingSource);
+
+  } catch(e) {
+    clearProgress();
+    document.getElementById('run-status').textContent = `检查失败：${e.message}`;
+    console.error(e);
+  }
+  btn.disabled = false;
+}
+
+// ─── RENDER RESULTS ──────────────────────────────────────────────────────────
+function renderResults(bold, privSrc, links, shareSrc) {
+  const area = document.getElementById('results-area');
+  area.innerHTML = '';
+  area.classList.remove('hidden');
+
+  if (bold) {
+    const sec = document.createElement('div');
+    sec.className = 'result-section';
+    sec.innerHTML = `<div class="result-section-title">一 · 隐私声明 · 敏感字段加粗检查</div>`;
+    if (bold._error) {
+      sec.appendChild(makeErrorCard('隐私声明加粗检查', bold._error));
+    } else {
+      sec.appendChild(makeBoldResultCard(bold, privSrc));
+    }
+    area.appendChild(sec);
+  }
+
+  if (links) {
+    const sec = document.createElement('div');
+    sec.className = 'result-section';
+    sec.innerHTML = `<div class="result-section-title">二 · 共享清单 · 链接有效性检查</div>`;
+    if (links._error) {
+      sec.appendChild(makeErrorCard('链接有效性检查', links._error));
+    } else {
+      sec.appendChild(makeLinkResultCard(links.links, shareSrc));
+    }
+    area.appendChild(sec);
+  }
+
+  // Summary
+  if (bold && !bold._error && links && !links._error) {
+    area.appendChild(makeSummaryCard(bold, links.links));
+  } else if (bold && !bold._error) {
+    area.appendChild(makeSummaryCard(bold, null));
+  } else if (links && !links._error) {
+    area.appendChild(makeSummaryCard(null, links.links));
+  }
+}
+
+function makeBoldResultCard(boldData, source) {
+  const compliant = [], notBold = [], notFound = [];
+  for (const f of fields) {
+    const r = boldData[f];
+    if (!r || !r.found) notFound.push(f);
+    else if (!r.allBold) notBold.push({ field: f, issues: r.issues });
+    else compliant.push(f);
+  }
+  const total = compliant.length + notBold.length;
+  const rate = total > 0 ? Math.round(compliant.length / total * 100) : 100;
+  const status = notBold.length === 0 ? 'pass' : notBold.length <= 3 ? 'warn' : 'fail';
+  const tagMap = { pass: ['badge-pass','✓ 全部合规'], warn: ['badge-warn','部分未加粗'], fail: ['badge-fail','存在问题'] };
+  const dotMap = { pass: 'dot-pass', warn: 'dot-warn', fail: 'dot-fail' };
+
+  const card = document.createElement('div');
+  card.className = 'result-card';
+  card.innerHTML = `
+    <div class="result-card-head open" onclick="toggleCard(this)">
+      <div class="rch-left">
+        <div class="status-dot ${dotMap[status]}"></div>
+        <span class="rch-title">敏感字段加粗检查</span>
+        <span class="rch-badge ${tagMap[status][0]}">${tagMap[status][1]}</span>
+      </div>
+      <span class="rch-arrow open">▲</span>
+    </div>
+    <div class="result-card-body open">
+      <div style="font-size:11px;color:var(--ink3);margin-bottom:12px;font-family:'DM Mono',monospace;">来源：${escHtml(source)}</div>
+      <div class="metrics-row">
+        <div class="metric-box m-pass"><div class="metric-num">${compliant.length}</div><div class="metric-label">合规字段</div></div>
+        <div class="metric-box m-warn"><div class="metric-num">${notBold.length}</div><div class="metric-label">未加粗字段</div></div>
+        <div class="metric-box"><div class="metric-num" style="color:var(--ink2)">${notFound.length}</div><div class="metric-label">未出现字段</div></div>
+      </div>
+      <div class="rate-row">
+        <div class="rate-bar"><div class="rate-fill" style="width:${rate}%;background:${rate===100?'#2E8B57':rate>60?'#D4860A':'#C0392B'};"></div></div>
+        <span class="rate-text">加粗合规率 ${rate}%（${compliant.length}/${total}）</span>
+      </div>
+      <div class="item-list">
+        ${compliant.map(f=>`<div class="item-row pass"><span class="item-sym pass">✓</span><div><div class="item-main">${escHtml(f)}</div></div></div>`).join('')}
+        ${notBold.map(nb=>`<div class="item-row warn"><span class="item-sym warn">!</span><div><div class="item-main">${escHtml(nb.field)}</div>${nb.issues.slice(0,3).map(iss=>`<div class="item-sub">${escHtml(iss)}</div>`).join('')}</div></div>`).join('')}
+        ${notFound.length ? `<div class="list-divider"></div>` : ''}
+        ${notFound.map(f=>`<div class="item-row miss"><span class="item-sym miss">–</span><div><div class="item-main">${escHtml(f)}</div><div class="item-sub" style="font-family:'Noto Sans SC',sans-serif;">文档中未出现，无需检查加粗</div></div></div>`).join('')}
+      </div>
+    </div>`;
+  return card;
+}
+
+function makeLinkResultCard(linkArr, source) {
+  if (linkArr.length === 0) {
+    const card = document.createElement('div');
+    card.className = 'result-card';
+    card.innerHTML = `
+      <div class="result-card-head open" onclick="toggleCard(this)">
+        <div class="rch-left">
+          <div class="status-dot dot-miss"></div>
+          <span class="rch-title">链接有效性检查</span>
+          <span class="rch-badge badge-miss">未发现链接</span>
+        </div>
+        <span class="rch-arrow open">▲</span>
+      </div>
+      <div class="result-card-body open">
+        <div style="font-size:12px;color:var(--ink3);">来源：${escHtml(source)}</div>
+        <div style="margin-top:12px;font-size:13px;color:var(--ink2);">未在文档/页面中发现任何 http(s) 链接。</div>
+      </div>`;
+    return card;
+  }
+
+  const valid = linkArr.filter(l => l.valid);
+  const invalid = linkArr.filter(l => !l.valid);
+  const rate = Math.round(valid.length / linkArr.length * 100);
+  const status = invalid.length === 0 ? 'pass' : invalid.length <= 2 ? 'warn' : 'fail';
+  const tagMap = { pass: ['badge-pass','全部有效'], warn: ['badge-warn','少量失效'], fail: ['badge-fail','多处失效'] };
+  const dotMap = { pass: 'dot-pass', warn: 'dot-warn', fail: 'dot-fail' };
+
+  const card = document.createElement('div');
+  card.className = 'result-card';
+  card.innerHTML = `
+    <div class="result-card-head open" onclick="toggleCard(this)">
+      <div class="rch-left">
+        <div class="status-dot ${dotMap[status]}"></div>
+        <span class="rch-title">链接有效性检查</span>
+        <span class="rch-badge ${tagMap[status][0]}">${tagMap[status][1]}</span>
+      </div>
+      <span class="rch-arrow open">▲</span>
+    </div>
+    <div class="result-card-body open">
+      <div style="font-size:11px;color:var(--ink3);margin-bottom:12px;font-family:'DM Mono',monospace;">来源：${escHtml(source)}</div>
+      <div class="metrics-row">
+        <div class="metric-box m-pass"><div class="metric-num">${valid.length}</div><div class="metric-label">有效链接</div></div>
+        <div class="metric-box m-fail"><div class="metric-num">${invalid.length}</div><div class="metric-label">无效链接</div></div>
+        <div class="metric-box"><div class="metric-num" style="color:var(--ink)">${linkArr.length}</div><div class="metric-label">链接总数</div></div>
+      </div>
+      <div class="rate-row">
+        <div class="rate-bar"><div class="rate-fill" style="width:${rate}%;background:${rate===100?'#2E8B57':rate>60?'#D4860A':'#C0392B'};"></div></div>
+        <span class="rate-text">链接有效率 ${rate}%（${valid.length}/${linkArr.length}）</span>
+      </div>
+      <div class="item-list">
+        ${valid.map(l=>`<div class="item-row pass"><span class="item-sym pass">✓</span><div><div class="item-sub" style="color:var(--pass);font-size:12px;">[${l.code}] ${escHtml(l.url)}</div></div></div>`).join('')}
+        ${invalid.map(l=>`<div class="item-row fail"><span class="item-sym fail">✕</span><div><div class="item-sub">[${l.code||l.error}] ${escHtml(l.url)}</div>${l.error&&l.code?`<div class="item-sub">${escHtml(l.error)}</div>`:''}</div></div>`).join('')}
+      </div>
+    </div>`;
+  return card;
+}
+
+function makeSummaryCard(bold, linkArr) {
+  let fieldRate = null, linkRate = null;
+  if (bold && !bold._error) {
+    const comp = fields.filter(f => bold[f] && bold[f].found && bold[f].allBold).length;
+    const found = fields.filter(f => bold[f] && bold[f].found).length;
+    fieldRate = found > 0 ? Math.round(comp/found*100) : 100;
+  }
+  if (linkArr) {
+    const valid = linkArr.filter(l=>l.valid).length;
+    linkRate = linkArr.length > 0 ? Math.round(valid/linkArr.length*100) : 100;
+  }
+  const allOk = (fieldRate === null || fieldRate === 100) && (linkRate === null || linkRate === 100);
+
+  const div = document.createElement('div');
+  div.className = 'summary-panel';
+  div.style.marginTop = '8px';
+
+  let metrics = '';
+  if (fieldRate !== null) metrics += `
+    <div class="summary-metric">
+      <div class="summary-num ${fieldRate===100?'ok':'ng'}">${fieldRate}%</div>
+      <div class="summary-label">字段加粗合规率</div>
+    </div>`;
+  if (linkRate !== null) metrics += `
+    <div class="summary-metric">
+      <div class="summary-num ${linkRate===100?'ok':'ng'}">${linkRate}%</div>
+      <div class="summary-label">链接有效率</div>
+    </div>`;
+
+  div.innerHTML = `
+    ${metrics}
+    <div class="summary-verdict ${allOk?'verdict-ok':'verdict-ng'}">
+      ${allOk ? '✓ 合规' : '⚠ 需整改'}
+    </div>`;
+  return div;
+}
+
+function makeErrorCard(title, msg) {
+  const card = document.createElement('div');
+  card.className = 'result-card';
+  card.innerHTML = `
+    <div class="result-card-head open" onclick="toggleCard(this)">
+      <div class="rch-left">
+        <div class="status-dot dot-fail"></div>
+        <span class="rch-title">${escHtml(title)}</span>
+        <span class="rch-badge badge-fail">检查失败</span>
+      </div>
+      <span class="rch-arrow open">▲</span>
+    </div>
+    <div class="result-card-body open">
+      <div style="font-size:13px;color:var(--danger);">${escHtml(msg)}</div>
+      <div class="notice" style="margin-top:10px;">如果是 HTML 链接无法抓取，可能是目标网站禁止了跨域请求（CORS）。建议改用 Word 文档上传方式。</div>
+    </div>`;
+  return card;
+}
+
+function toggleCard(head) {
+  const body = head.nextElementSibling;
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  head.classList.toggle('open', !isOpen);
+  const arrow = head.querySelector('.rch-arrow');
+  arrow.classList.toggle('open', !isOpen);
+  arrow.textContent = isOpen ? '▼' : '▲';
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
